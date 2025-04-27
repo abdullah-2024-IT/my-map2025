@@ -1,0 +1,1431 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>خريطة الجامعة - جامعة الطائف</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="/path/to/buildings-data.js"></script>
+<style>
+.search-container input {
+    width: 300px;
+    padding: 7px 12px;
+    font-size: 14px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+</style>
+<style>
+    /* ✅ ستايل لتغيير شكل المؤشر إلى دبوس */
+    .cursor-pin {
+        cursor: url('https://maps.gstatic.com/mapfiles/api-3/images/spotlight-poi2_hdpi.png') 16 32, auto;
+    }
+    </style>
+    
+<style>
+    .direction-button {
+        padding: 12px 20px;
+        background-color: #007bff;
+        color: white;
+        font-size: 1.2em;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.3s, transform 0.2s;
+        width: 100%;
+    }
+    
+    .direction-button:hover {
+        background-color: #0056b3;
+        transform: scale(1.05);
+    }
+    </style>
+<style>
+    .category-list li {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        padding: 8px;
+        transition: transform 0.2s ease, background-color 0.2s ease;
+        border-radius: 8px;
+    }
+
+    .category-list li img {
+        width: 24px;
+        height: 24px;
+        margin-left: 8px;
+        transition: transform 0.2s ease;
+    }
+
+    /* عند المرور Hover */
+    .category-list li:hover {
+        transform: scale(1.05);
+        background-color: #f0f0f0;
+    }
+
+    /* عند الضغط Active */
+    .category-list li:active {
+        transform: scale(0.95);
+        background-color: #e0e0e0;
+    }
+
+    .category-list li span {
+        font-size: 16px;
+        color: black;
+    }
+</style>
+
+<style>
+    /* ✅ الشريط الجانبي الأساسي (موجود عندك سابقاً) */
+    .sidebar .icon img {
+        width: 40px;
+        height: 40px;
+        transition: transform 0.3s ease; /* ✅ حركة ناعمة عند التكبير */
+    }
+    
+    /* ✅ عند المرور على الأيقونة */
+    .sidebar .icon:hover img {
+        transform: scale(1.2); /* ✅ تكبير بنسبة 20% عند المرور */
+    }
+    
+    /* ✅ أيضاً تكبير النص مع الأيقونة لو أردت */
+    .sidebar .icon:hover span {
+        font-size: 16px; /* اختيارياً: تكبير الكتابة قليلاً عند المرور */
+    }
+    </style>
+    
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: Arial, sans-serif; }
+        #map { height: 100vh; width: 100%; position: absolute; top: 0; right: 0; z-index: 0; }
+        #loadingMessage {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 20px;
+            color: #007BFF;
+            z-index: 1000;
+            display: none;
+        }
+
+        /* ✅ الشريط الجانبي أسود والكتابة بيضاء وتكبير الأيقونات */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 80px; /* أكبر قليلاً */
+            height: 100%;
+            background-color: #000;
+            border-left: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 10px;
+            z-index: 1001;
+        }
+
+        .sidebar .icon {
+            margin: 20px 0;
+            cursor: pointer;
+            text-align: center;
+            color: white;
+        }
+
+        .sidebar .icon img {
+            width: 40px; /* ✅ تكبير الأيقونات */
+            height: 40px;
+        }
+
+        .sidebar .icon span {
+            font-size: 14px;
+            display: block;
+            margin-top: 5px;
+            color: white;
+        }
+
+        .sub-sidebar {
+            position: fixed;
+            top: 0;
+            right: 80px; /* تم تعديله ليتناسب مع حجم الشريط الجديد */
+            width: 220px;
+            height: 100%;
+            background-color: #111;
+            border-left: 1px solid #333;
+            padding: 10px;
+            overflow-y: auto;
+            display: none;
+            z-index: 1000;
+            color: white;
+        }
+
+        .sub-sidebar h3, .sub-sidebar span, .sub-sidebar p {
+            color: white;
+        }
+
+        #messageBox {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            z-index: 2000;
+            display: none;
+        }
+
+        #messageBox button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #1e90ff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        /* زر تويتر */
+        .twitter-button {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 20px;
+            background-color: #1da1f2;
+            color: white;
+            border-radius: 5px;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        /* تأثير التوهج */
+        svg .glow-path {
+            filter: url(#glow-filter);
+        }
+    </style>
+    <style>
+        .topbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background-color: white;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            direction: rtl;
+        }
+        
+        .language-switch {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .language-switch button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .search-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .search-container input {
+            width: 300px;
+            padding: 7px 77px;
+            font-size: 15px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+        
+        .search-container button {
+            padding: 8px 16px;
+            background-color: #007bff;
+            border: none;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .logo img {
+            width: 45px;
+            cursor: pointer;
+        }
+        </style>
+        <style>
+            #visitTwitter:hover {
+                box-shadow: 0 0 15px #007bff, 0 0 25px #007bff;
+            }
+        </style>
+        <style>
+            .search-container input {
+                width: 300px; /* ✅ عرض مربع البحث */
+                padding: 7px 12px; /* ✅ ارتفاع مريح ومسافة داخلية مناسبة */
+                font-size: 15px; /* ✅ حجم الخط داخل مربع البحث */
+                border-radius: 6px;
+                border: 1px solid #ccc;
+            }
+            
+            /* ✅ تنسيق قائمة الاقتراحات */
+            #suggestionsList {
+                position: absolute;
+                top: 100%;
+                right: 0;
+                width: 300px; /* ✅ نفس عرض مربع البحث */
+                max-height: 250px; /* ✅ ارتفاع مناسب للتمرير */
+                background: white;
+                border: 1px solid #ccc;
+                overflow-y: auto;
+                padding: 0;
+                margin: 2px 0 0;
+                list-style: none;
+                border-radius: 0 0 6px 6px; /* ✅ تقريب الزوايا السفلية للاقتراب من تصميم البحث */
+                z-index: 3000;
+            }
+            
+            /* ✅ تنسيق العناصر داخل قائمة الاقتراحات */
+            #suggestionsList li {
+                padding: 10px 12px; /* ✅ مسافة داخلية مشابهة للبحث */
+                cursor: pointer;
+                font-size: 15px; /* ✅ نفس حجم خط مربع البحث */
+                border-bottom: 1px solid #eee;
+            }
+            
+            /* ✅ تأثير عند المرور على عنصر اقتراح */
+            #suggestionsList li:hover,
+            #suggestionsList li.highlight {
+                background-color: #007bff;
+                color: white;
+            }
+            </style>
+            
+            <style>
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+                </style>
+                
+</head>
+<!-- ✅ شاشة التحميل -->
+<div id="loadingScreen" style="
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%; 
+    background: linear-gradient(to bottom right, #007bff, #66b3ff); 
+    display: flex; 
+    flex-direction: column; 
+    justify-content: center; 
+    align-items: center; 
+    z-index: 3000;
+">
+<img src="/images/شعار_جامعة_الطائف_السعودية.jpg" alt="شعار الجامعة" style="
+width: 720px; 
+max-width: 80%; 
+border-radius: 20px; 
+box-shadow: 0 4px 20px rgba(0,0,0,0.3); 
+margin-bottom: 30px;
+">
+
+    <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 22px; font-weight: bold; color: white;">جاري التحميل...</span>
+        <div class="spinner" style="
+            width: 28px; 
+            height: 28px; 
+            border: 4px solid white; 
+            border-top: 4px solid transparent; 
+            border-radius: 50%; 
+            animation: spin 1s linear infinite;">
+        </div>
+    </div>
+</div>
+
+<!-- ✅ سكربت شاشة التحميل + تحديد الموقع بعد 5 ثواني -->
+<script>
+window.addEventListener('load', function() {
+    // ننتظر 5 ثواني لشاشة التحميل
+    setTimeout(function() {
+        // إخفاء شاشة التحميل
+        document.getElementById('loadingScreen').style.display = 'none';
+
+        // ثم نسأل المستخدم عن تحديد الموقع
+        if (confirm('📍 هل تريد تحديد موقعك وعرضه على الخريطة؟')) {
+            if (!navigator.geolocation) {
+                alert('المتصفح لا يدعم تحديد الموقع الجغرافي.');
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                function (position) {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+
+                    // إضافة ماركر على الخريطة باستخدام Leaflet
+                    const userMarker = L.marker([lat, lng], {
+                        icon: L.icon({
+                            iconUrl: 'https://cdn-icons-png.flaticon.com/512/64/64113.png',
+                            iconSize: [40, 40],
+                            iconAnchor: [20, 40]
+                        })
+                    }).addTo(map).bindPopup('📍 موقعك الحالي').openPopup();
+
+                    // تحريك الخريطة إلى الموقع
+                    map.setView([lat, lng], 16);
+                },
+                function (error) {
+                    alert('تعذر تحديد موقعك: ' + error.message);
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                }
+            );
+        } else {
+            console.log('المستخدم رفض تحديد الموقع.');
+        }
+    }, 5000); // ✅ هنا المدة 5 ثواني بدل 4
+});
+</script>
+
+
+<!-- ✅ الشريط العلوي -->
+<div class="topbar">
+    <div class="logo" style="display: flex; align-items: center;">
+        <img src="/images/شعار_جامعة_الطائف_السعودية.png" alt="شعار" onclick="showWelcomeVideo()" style="width: 120px; height: auto;">
+
+    </div>
+<!-- ✅ نافذة الفيديو المنبثقة -->
+<div id="videoPopup" style="
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    z-index: 9999;
+    text-align: center;
+    max-width: 90%;
+    max-height: 90%;
+    opacity: 0;
+    transition: opacity 0.4s ease-in-out;
+">
+    <h2 style="margin-bottom: 10px;">جامعة الطائف ترحب بكم</h2>
+
+    <div id="videoFrameContainer"></div>
+
+    <br>
+    <button onclick="closeWelcomeVideo()" style="margin-top: 10px;">إغلاق</button>
+</div>
+
+<script>
+    window.addEventListener('load', function() {
+        setTimeout(function() {
+            document.getElementById('loadingScreen').style.display = 'none';
+        }, 4000); // 4000ms = 4 ثواني
+    });
+    </script>
+    
+<!-- ✅ سكربت تشغيل الفيديو -->
+<script>
+    const driveEmbedUrl = "https://drive.google.com/file/d/15ITjpqr7mY9kWqImi5LtkGyIKSDfPxeh/preview";
+
+    function showWelcomeVideo() {
+        const popup = document.getElementById("videoPopup");
+        const container = document.getElementById("videoFrameContainer");
+
+        // إدراج الفيديو فقط عند الفتح
+        container.innerHTML = `
+            <iframe id="welcomeVideo"
+                    src="${driveEmbedUrl}"
+                    width="640" height="360"
+                    allow="autoplay" allowfullscreen
+                    style="border: none; border-radius: 10px;">
+            </iframe>
+        `;
+
+        popup.style.display = "block";
+        setTimeout(() => {
+            popup.style.opacity = "1";
+        }, 10);
+    }
+
+    function closeWelcomeVideo() {
+        const popup = document.getElementById("videoPopup");
+        const container = document.getElementById("videoFrameContainer");
+
+        popup.style.opacity = "0";
+        setTimeout(() => {
+            popup.style.display = "none";
+            container.innerHTML = ""; // تنظيف وإيقاف الفيديو
+        }, 400);
+    }
+
+    // ✅ ربط الضغط على الشعار مع إظهار الفيديو
+    document.getElementById("universityLogo").addEventListener("click", showWelcomeVideo);
+</script>
+<div class="search-container" style="position: relative; display: flex; align-items: center; width: 600px;">
+    <button id="searchButton" style="margin-left: 5px;">بحث</button>
+    <input type="text" id="searchInput" placeholder="ابحث عن المبنى..." style="flex: 1;" />
+    <ul id="suggestionsList" style="display: none;"></ul>
+</div>
+
+
+    
+
+    <div class="language-switch">
+        <button onclick="setLanguage('ar')">عربي</button>
+        <span>|</span>
+        <button onclick="setLanguage('en')">English</button>
+    </div>
+</div>
+<body>
+<!-- ✅ فلتر SVG للتوهج -->
+<svg height="0" width="0">
+    <filter id="glow-filter" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="3.5" result="coloredBlur"/>
+        <feMerge>
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+    </filter>
+</svg>
+
+<!-- ✅ الخريطة -->
+<div id="map" style="position: absolute; top: 60px; left: 330px; right: 0; bottom: 0; z-index: 0;"></div>
+<div id="loadingMessage" style="position: absolute; top: 70px; left: 340px; color: black;">جاري تحميل الخريطة...</div>
+
+<!-- ✅ الشريط الجانبي الرئيسي -->
+<div class="sidebar" style="position: fixed; top: 60px; left: 0; width: 80px; height: calc(100vh - 60px); background-color: black; color: white; border-right: 1px solid #333; z-index: 1000; display: flex; flex-direction: column; align-items: center; padding-top: 10px;">
+    <div class="icon" onclick="toggleSubSidebar('explore')" style="margin-bottom: 20px; text-align: center;">
+        <img src="/images/explore-icon.png" alt="استكشاف" style="width: 40px;">
+        <span data-key="explore" style="display: block; font-size: 12px;">استكشاف</span>
+    </div>
+    <div class="icon" onclick="toggleSubSidebar('places')" style="margin-bottom: 20px; text-align: center;">
+        <img src="/images/location-icon.png" alt="أماكني" style="width: 40px;">
+        <span data-key="places" style="display: block; font-size: 12px;">أماكني</span>
+    </div>
+    <div class="icon" onclick="toggleSubSidebar('directions')" style="margin-bottom: 20px; text-align: center;">
+        <img src="/images/directions-icon.png" alt="الاتجاهات" style="width: 40px;">
+        <span data-key="directions" style="display: block; font-size: 12px;">الاتجاهات</span>
+    </div>
+    <div class="icon" onclick="toggleSubSidebar('events')" style="margin-bottom: 20px; text-align: center;">
+        <img src="/images/events-icon.png" alt="الأحداث" style="width: 40px;">
+        <span data-key="events" style="display: block; font-size: 12px;">الأحداث</span>
+    </div>
+    <div class="icon alert-icon" onclick="showMessage()" style="margin-top: auto; margin-bottom: 10px; text-align: center;">
+        <img src="/images/light-bulb.png" alt="تعجب" style="width: 40px;">
+    </div>
+</div>
+
+<!-- ✅ الشرائط الجانبية الفرعية -->
+
+<div id="explore" class="sub-sidebar" style="position: fixed; top: 60px; left: 80px; width: 250px; height: calc(100vh - 60px); background-color: white; color: black; border-right: 1px solid #ddd; overflow-y: auto; display: none; padding: 10px;">
+    <h3 data-key="explore" style="color: black;">استكشاف</h3>
+    <ul class="category-list" style="list-style: none; padding: 0;">
+        <li onclick="showCategory('college')"><img src="/images/33.png" style="width: 20px;"> <span data-key="college">الكليات</span></li>
+        <li onclick="showCategory('admin')"><img src="/images/77.png" style="width: 20px;"> <span data-key="admin">الإدارة</span></li>
+        <li onclick="showCategory('medical')"><img src="/images/44.png" style="width: 20px;"> <span data-key="medical">الإدارة الطبية</span></li>
+        <li onclick="showCategory('library')"><img src="/images/55.png" style="width: 20px;"> <span data-key="library">المكتبة</span></li>
+        <li onclick="showCategory('mosque')"><img src="/images/11.png" style="width: 20px;"> <span data-key="mosque">المساجد</span></li>
+        <li onclick="showCategory('restaurant')"><img src="/images/22.png" style="width: 20px;"> <span data-key="restaurant">المطاعم</span></li>
+    </ul>
+</div>
+
+<div id="places" class="sub-sidebar" style="position: fixed; top: 60px; left: 80px; width: 250px; height: calc(100vh - 60px); background-color: white; color: black; border-right: 1px solid #ddd; overflow-y: auto; display: none; padding: 10px;">
+    <h3 data-key="places" style="color: black;">أماكني</h3>
+
+    <div id="placesContent"></div>
+</div>
+
+<div id="directions" class="sub-sidebar" style="position: fixed; top: 60px; left: 80px; width: 250px; height: calc(100vh - 60px); background-color: white; color: black; border-right: 1px solid #ddd; overflow-y: auto; display: none; padding: 10px;">
+    <h3 data-key="directions" style="color: black;">الاتجاهات</h3>
+
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+        <button id="startButton" onclick="setStartPoint()" class="direction-button" data-key="setStart" style="padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 5px;">
+            📍 تحديد نقطة البداية
+        </button>
+
+        <button id="endButton" onclick="setEndPoint()" class="direction-button" data-key="setEnd" style="padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 5px;">
+            🎯 تحديد نقطة النهاية
+        </button>
+
+        <button id="resetButton" onclick="resetRoute()" class="direction-button" data-key="reset" style="padding: 10px; background-color: #dc3545; color: white; border: none; border-radius: 5px;">
+            🔄 إعادة تعيين
+        </button>
+
+        <div id="distanceInfo" data-key="distanceInfo" style="margin-top: 20px; padding: 12px; border: 2px dashed #007bff; border-radius: 10px; text-align: center; font-weight: bold;">
+            المسافة ستظهر هنا بعد تحديد النقطتين...
+        </div>
+    </div>
+</div>
+
+
+<div id="events" class="sub-sidebar" style="position: fixed; top: 60px; left: 80px; width: 250px; height: calc(100vh - 60px); background-color: white; color: black; border-right: 1px solid #ddd; overflow-y: auto; display: none; padding: 10px;">
+    <h3 id="eventsTitle" data-key="events" style="color: black;">
+        الأحداث
+    </h3>
+
+    <div class="events-content">
+        <p id="eventsInfo" data-key="eventsInfo" style="color: black; text-align: center;">
+            لرؤية الأحداث وآخر التحديثات، قم بزيارة صفحة تويتر الرسمية:
+        </p>
+
+        <a id="visitTwitter" data-key="visitTwitter" href="https://x.com/TaifUniversity" target="_blank"
+           style="background-color: #007bff; color: white; padding: 10px 20px;
+                  text-decoration: none; border-radius: 8px; display: inline-block;
+                  font-weight: bold; transition: box-shadow 0.3s ease;">
+            زيارة تويتر
+        </a>
+    </div>
+</div>
+
+
+<!-- ✅ رسالة منتصف الشاشة -->
+<div id="messageBox" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.2); z-index: 2000;">
+    <p id="messageText" style="margin: 0; color: black;">خريطة تفاعلية لجامعة الطائف!</p>
+    <button onclick="closeMessage()" style="margin-top: 10px;">إغلاق</button>
+</div>
+
+<script>
+    // 🔵 الحد الأقصى لعدد عمليات البحث المحفوظة
+    const maxHistory = 5;
+    
+    // 🔵 دالة لحفظ البحث في localStorage
+    function saveSearch(query) {
+        if (!query) return;
+    
+        let searchHistory = JSON.parse(localStorage.getItem("searchHistory")) || [];
+    
+        if (!searchHistory.includes(query)) {
+            searchHistory.unshift(query);
+        }
+    
+        if (searchHistory.length > maxHistory) {
+            searchHistory.pop();
+        }
+    
+        localStorage.setItem("searchHistory", JSON.stringify(searchHistory));
+    }
+    
+    // 🔵 دالة تنفيذ البحث المباشر من الضغط على عنصر
+    function searchFromHistory(name) {
+        const input = document.getElementById("searchInput");
+        if (input) {
+            input.value = name;
+            searchBuilding(); // 🔥 استدعاء دالة البحث مباشرة
+        }
+    }
+    
+    // 🔵 دالة عرض عمليات البحث داخل أماكني
+    function displaySearchHistory() {
+        const searchHistory = JSON.parse(localStorage.getItem("searchHistory")) || [];
+        const placesContent = document.getElementById("placesContent");
+    
+        if (!placesContent) return;
+    
+        const lang = document.documentElement.lang || 'ar';
+        const t = translations[lang] || {};
+    
+        if (searchHistory.length === 0) {
+            placesContent.innerHTML = `<p style="text-align:center; color:gray;">${t.noSearches || "لا توجد عمليات بحث سابقة."}</p>`;
+        } else {
+            const ul = document.createElement('ul');
+            ul.style.listStyle = 'none';
+            ul.style.padding = '0';
+    
+            searchHistory.slice().reverse().forEach(query => {
+                const loweredQuery = query.toLowerCase().trim();
+    
+                const match = buildings.find(b =>
+                    (b.name && b.name.toLowerCase().includes(loweredQuery)) ||
+                    (b.enName && b.enName.toLowerCase().includes(loweredQuery))
+                );
+    
+                const displayName = match ? (lang === 'ar' ? match.name : (match.enName || match.name)) : query;
+    
+                const li = document.createElement('li');
+                li.textContent = displayName;
+                li.style.padding = '8px';
+                li.style.marginBottom = '5px';
+                li.style.background = '#f0f0f0';
+                li.style.borderRadius = '5px';
+                li.style.textAlign = 'center';
+                li.style.fontWeight = 'bold';
+                li.style.cursor = 'pointer';
+                li.style.transition = '0.3s'; // ✅ انتقال سلس للتوهج
+    
+                // عند تمرير الفأرة ➔ إضافة تأثير التوهج
+                li.addEventListener('mouseover', () => {
+                    li.style.boxShadow = '0 0 10px #007bff'; // 🔵 توهج أزرق خفيف
+                    li.style.background = '#e0eaff'; // تغيير لون الخلفية مع التوهج
+                });
+    
+                li.addEventListener('mouseout', () => {
+                    li.style.boxShadow = 'none';
+                    li.style.background = '#f0f0f0'; // يرجع للون الطبيعي
+                });
+    
+                li.addEventListener('click', () => {
+                    searchFromHistory(displayName);
+                });
+    
+                ul.appendChild(li);
+            });
+    
+            placesContent.innerHTML = `
+                <h3 style="text-align:center;">${t.searchTitle || "آخر عمليات البحث"}:</h3>
+            `;
+            placesContent.appendChild(ul);
+        }
+    }
+    
+    // 🔵 عند الضغط على زر البحث أو زر إنتر
+    function handleSearch() {
+        const input = document.getElementById("searchInput").value.trim();
+        if (input) {
+            saveSearch(input);
+            searchBuilding();
+            displaySearchHistory();
+        } else {
+            alert("يرجى إدخال نص للبحث.");
+        }
+    }
+    
+    // زر البحث
+    document.getElementById("searchButton").addEventListener("click", handleSearch);
+    
+    // زر Enter في حقل الإدخال
+    document.getElementById("searchInput").addEventListener("keypress", function (e) {
+        if (e.key === "Enter") {
+            handleSearch();
+        }
+    });
+    
+    // 🔵 عند فتح قسم أماكني يتم تحديث العرض
+    const placesIcon = document.querySelector(".icon[onclick*='places']");
+    if (placesIcon) {
+        placesIcon.addEventListener("click", displaySearchHistory);
+    }
+    </script>
+    
+
+<script src="/buildings-data.js"></script> <!-- تأكد من تحميل ملف المباني هنا -->
+<script>
+    function showCategory(category) {
+        if (!buildingLayers || buildingLayers.length === 0) {
+            alert("الخريطة لم تكتمل بعد.");
+            return;
+        }
+    
+        // تحديد اللغة الحالية بناءً على اتجاه الصفحة (dir)
+        const isArabic = document.documentElement.getAttribute("dir") === "rtl";
+    
+        // الكلمات حسب التصنيف واللغة
+        const categories = {
+            college: {
+                ar: ["كلية"],
+                en: ["College"]
+            },
+            admin: {
+                ar: ["الإدارة"],
+                en: ["Administration"]
+            },
+            medical: {
+                ar: ["الإدارة الطبية"],
+                en: ["Medical Administration", "Medical Admin"]
+            },
+            library: {
+                ar: ["مكتبة", "المكتبات"],
+                en: ["Library", "Libraries"]
+            },
+            mosque: {
+                ar: ["مسجد", "المساجد"],
+                en: ["Mosque", "Mosques"]
+            },
+            restaurant: {
+                ar: ["مطعم", "المطعم"],
+                en: ["Restaurant"]
+            }
+        };
+    
+        // حدد الكلمات بناءً على التصنيف واللغة
+        const keywords = categories[category] ? (isArabic ? categories[category].ar : categories[category].en) : [];
+    
+        if (keywords.length === 0) {
+            return; // لا شيء للبحث
+        }
+    
+        let found = false;
+    
+        buildingLayers.forEach(obj => {
+            const name = (obj.feature.name || "").toLowerCase();
+    
+            if (keywords.some(kw => name.includes(kw.toLowerCase()))) {
+                if (obj.layer && obj.layer.bindPopup) {
+                    obj.layer.bindPopup(obj.feature.name).openPopup();
+                }
+    
+                const path = obj.layer.getElement && obj.layer.getElement();
+                if (path) {
+                    path.classList.add('glow-path');
+                    obj.layer.setStyle({ weight: 5 });
+                    setTimeout(() => {
+                        path.classList.remove('glow-path');
+                        obj.layer.setStyle(obj.originalStyle);
+                    }, 3000);
+                }
+                found = true;
+            }
+        });
+    
+        if (!found) {
+            alert(isArabic ? 'لا توجد مبانٍ مطابقة.' : 'No matching buildings found.');
+        }
+    }
+    </script>
+    
+    <script>
+        function resetRoute() {
+            // إزالة الدبابيس إن وجدت
+            if (startMarker) {
+                map.removeLayer(startMarker);
+                startMarker = null;
+            }
+            if (endMarker) {
+                map.removeLayer(endMarker);
+                endMarker = null;
+            }
+        
+            // إزالة الخط إن وجد
+            if (routeLine) {
+                map.removeLayer(routeLine);
+                routeLine = null;
+            }
+        
+            // تصفير المسافة
+            document.getElementById('distanceInfo').innerText = "المسافة ستظهر هنا بعد تحديد النقطتين...";
+        }
+        </script>
+        
+    
+<!-- ✅ بوب اب لتفاصيل الرقم -->
+<div id="numberPopup" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%);
+background:white; padding:20px; border-radius:12px; box-shadow:0 0 30px rgba(0,0,0,0.4); z-index:9999;
+text-align:center; font-size:18px; min-width:250px;">
+    <div id="popupContent"></div>
+    <button onclick="closePopup()" style="margin-top:10px; padding:5px 20px; border:none; border-radius:8px; background:#007bff; color:white; cursor:pointer;">موافق</button>
+</div>
+<script>
+    let startMarker = null;
+    let endMarker = null;
+    let routeLine = null;
+    
+    // دالة إنشاء ماركر draggable
+    function createDraggableMarker(latlng, color) {
+        return L.marker(latlng, {
+            draggable: true,
+            icon: L.icon({
+                iconUrl: `https://chart.googleapis.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|${color}`,
+                iconSize: [30, 50],
+                iconAnchor: [15, 50],
+            })
+        }).addTo(map);
+    }
+    
+    // ✅ دالة تحديد نقطة البداية بدون رسالة
+    function setStartPoint() {
+        map.getContainer().classList.add('cursor-pin'); // تغيير شكل الماوس فقط
+    
+        map.once('click', function(e) {
+            if (startMarker) map.removeLayer(startMarker);
+    
+            startMarker = createDraggableMarker(e.latlng, '28a745'); // دبوس أخضر
+            startMarker.on('dragend', updateRoute);
+    
+            map.getContainer().classList.remove('cursor-pin'); // رجع الماوس طبيعي
+            updateRoute();
+        });
+    }
+    
+    // ✅ دالة تحديد نقطة النهاية بدون رسالة
+    function setEndPoint() {
+        map.getContainer().classList.add('cursor-pin'); // تغيير شكل الماوس فقط
+    
+        map.once('click', function(e) {
+            if (endMarker) map.removeLayer(endMarker);
+    
+            endMarker = createDraggableMarker(e.latlng, 'dc3545'); // دبوس أحمر
+            endMarker.on('dragend', updateRoute);
+    
+            map.getContainer().classList.remove('cursor-pin'); // رجع الماوس طبيعي
+            updateRoute();
+        });
+    }
+    
+    // ✅ دالة رسم الخط وحساب المسافة
+    function updateRoute() {
+        if (startMarker && endMarker) {
+            const startLatLng = startMarker.getLatLng();
+            const endLatLng = endMarker.getLatLng();
+    
+            // حذف الخط القديم لو موجود
+            if (routeLine) {
+                map.removeLayer(routeLine);
+            }
+    
+            // رسم خط جديد
+            routeLine = L.polyline([startLatLng, endLatLng], {color: 'blue', weight: 5}).addTo(map);
+    
+            // حساب المسافة
+            const distance = map.distance(startLatLng, endLatLng);
+            const distanceText = (distance > 1000)
+                ? (distance / 1000).toFixed(2) + " كم"
+                : Math.round(distance) + " متر";
+    
+            // عرض المسافة
+            document.getElementById('distanceInfo').innerText = `المسافة بين النقطتين: ${distanceText}`;
+    
+            // توسيط الخريطة على المسار
+            map.fitBounds(routeLine.getBounds(), {padding: [50, 50]});
+        }
+    }
+    </script>
+    
+    
+    <script>
+        let buildingLayers = [];
+        
+        // تحميل خريطة GeoJSON
+        fetch('tu_map_force_colored.geojson')
+            .then(res => res.json())
+            .then(data => {
+                L.geoJSON(data, {
+                    style: function (feature) {
+                        const props = feature.properties || {};
+        
+                        if (props.name === "جامعه الطائف - طلاب") {
+                            return {
+                                color: "blue",
+                                opacity: 1,
+                                weight: 3,
+                                stroke: true,
+                                fill: false,
+                                fillColor: "transparent",
+                                fillOpacity: 0
+                            };
+                        }
+        
+                        return {
+                            color: props.borderColor || "#888",
+                            weight: 2,
+                            fillColor: props.fillColor || "#888",
+                            fillOpacity: 0.4
+                        };
+                    },
+                    onEachFeature: function (feature, layer) {
+                        const props = feature.properties || {};
+        
+                        if (props.name) {
+                            layer.bindPopup(props.name);
+                        }
+        
+                        buildingLayers.push({
+                            layer: layer,
+                            feature: props,
+                            originalStyle: {
+                                weight: layer.options.weight,
+                                color: layer.options.color,
+                                fillColor: layer.options.fillColor,
+                                fillOpacity: layer.options.fillOpacity,
+                                opacity: layer.options.opacity
+                            }
+                        });
+        
+                        layer.on('mouseover', function () {
+                            const path = layer.getElement();
+                            if (path) {
+                                path.classList.add('glow-path');
+                                const original = buildingLayers.find(b => b.layer === layer).originalStyle;
+                                layer.setStyle({ 
+                                    weight: 8, 
+                                    color: original.color // ✅ نفس لون حدود المبنى
+                                });
+                            }
+                        });
+        
+                        layer.on('mouseout', function () {
+                            const path = layer.getElement();
+                            if (path) {
+                                path.classList.remove('glow-path');
+                                const original = buildingLayers.find(b => b.layer === layer).originalStyle;
+                                layer.setStyle(original);
+                            }
+                        });
+                    }
+                }).addTo(map);
+        
+                loadingMessage.style.display = 'none';
+            })
+            .catch(error => {
+                loadingMessage.innerHTML = 'حدث خطأ أثناء تحميل البيانات';
+                console.error('GeoJSON Load Error:', error);
+            });
+        
+        // 🔄 دالة تنظيف الاسم
+        function cleanName(name) {
+            return name.replace(/^[\(\d\)\-\s]+/, '').trim().toLowerCase();
+        }
+        
+        // ✅ دالة إظهار بوب أب القاعة
+        function showNumberPopup(building, floor, room) {
+            const popupContent = document.getElementById('popupContent');
+            popupContent.innerHTML = `
+                <div>🏢 <strong>المبنى:</strong> ${building}</div>
+                <div>🏬 <strong>الدور:</strong> ${floor}</div>
+                <div>🏛️ <strong>القاعة:</strong> ${room}</div>
+            `;
+            document.getElementById('numberPopup').style.display = 'block';
+        }
+        
+        // ✅ دالة إغلاق البوب أب
+        function closePopup() {
+            document.getElementById('numberPopup').style.display = 'none';
+        }
+        
+        // 🔍 دالة البحث عن مبنى
+        function searchBuilding() {
+            const input = document.getElementById('searchInput').value.trim();
+            if (!input) return;
+        
+            const loweredInput = input.toLowerCase();
+            const isNumber = !isNaN(loweredInput);
+            let matchedBuilding = null;
+        
+            if (isNumber) {
+                const num = parseInt(loweredInput);
+        
+                if (input.length === 4) {
+                    const building = parseInt(input.charAt(0));
+                    const floor = parseInt(input.charAt(1));
+                    const room = input.substring(2);
+                    showNumberPopup(building, floor, room);
+                } else if (input.length === 5) {
+                    const building = parseInt(input.substring(0, 2));
+                    const floor = parseInt(input.charAt(2));
+                    const room = input.substring(3);
+                    showNumberPopup(building, floor, room);
+                }
+        
+                matchedBuilding = buildings.find(b => {
+                    return (b.room && num >= b.room && num <= b.room + 499) ||
+                           (b.shortRoom && String(b.shortRoom) === String(num));
+                });
+            } else {
+                matchedBuilding = buildings.find(b =>
+                    (b.name && b.name.toLowerCase().includes(loweredInput)) ||
+                    (b.enName && b.enName.toLowerCase().includes(loweredInput))
+                );
+            }
+        
+            if (!matchedBuilding) {
+                alert('لم يتم العثور على المبنى.');
+                return;
+            }
+        
+            const targetLayer = buildingLayers.find(obj => {
+                const cleanGeoName = cleanName(obj.feature.name || "");
+                const cleanTarget = cleanName(matchedBuilding.name || "");
+                return cleanGeoName.includes(cleanTarget);
+            });
+        
+            if (targetLayer) {
+                if (targetLayer.layer.openPopup) {
+                    targetLayer.layer.openPopup();
+                }
+        
+                const path = targetLayer.layer.getElement && targetLayer.layer.getElement();
+                if (path) {
+                    path.classList.add('glow-path');
+                    const original = targetLayer.originalStyle;
+                    targetLayer.layer.setStyle({ 
+                        weight: 8, 
+                        color: original.color 
+                    });
+        
+                    setTimeout(() => {
+                        path.classList.remove('glow-path');
+                        targetLayer.layer.setStyle(original);
+                    }, 3000);
+                }
+            } else {
+                alert('لم يتم العثور على طبقة المبنى.');
+            }
+        }
+        
+        // 🔎 ربط البحث بزر وإدخال
+        document.getElementById('searchButton').addEventListener('click', searchBuilding);
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchBuilding();
+            }
+        });
+        </script>
+        
+        
+
+
+
+
+<!-- ✅ سكربت التفعيل -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    function toggleSubSidebar(id) {
+        document.querySelectorAll('.sub-sidebar').forEach(function (el) {
+            el.style.display = (el.id === id && el.style.display !== 'block') ? 'block' : 'none';
+        });
+    }
+
+    function showMessage() {
+        document.getElementById('messageBox').style.display = 'block';
+    }
+
+    function closeMessage() {
+        document.getElementById('messageBox').style.display = 'none';
+    }
+</script>
+<script>
+    const map = L.map('map').setView([21.433, 40.495], 17);
+  
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 20,
+        attribution: '© OpenStreetMap'
+    }).addTo(map);
+  
+    const loadingMessage = document.getElementById('loadingMessage');
+    loadingMessage.style.display = 'block';
+  
+    fetch('tu_map_force_colored.geojson')
+        .then(res => {
+            if (!res.ok) throw new Error('فشل تحميل البيانات');
+            return res.json();
+        })
+        .then(data => {
+            L.geoJSON(data, {
+                pointToLayer: function (feature, latlng) {
+                    const props = feature.properties || {};
+                    const color = props.markerColor || "#3388ff";
+  
+                    const marker = L.circleMarker(latlng, {
+                        radius: 8,
+                        fillColor: color,
+                        color: "#000",
+                        weight: 1,
+                        opacity: 1,
+                        fillOpacity: 0.9
+                    });
+  
+                    // كل النقاط تتوهج عند المرور عليها
+                    marker.on('mouseover', function () {
+                        const path = marker.getElement();
+                        if (path) {
+                            path.classList.add('glow-path');
+                            marker.setStyle({ weight: 3 });
+                        }
+                    });
+  
+                    marker.on('mouseout', function () {
+                        const path = marker.getElement();
+                        if (path) {
+                            path.classList.remove('glow-path');
+                            marker.setStyle({ weight: 1 });
+                        }
+                    });
+  
+                    return marker;
+                },
+                style: function (feature) {
+                    const props = feature.properties || {};
+  
+                    if (props.name === "جامعه الطائف - طلاب") {
+                        return {
+                            color: "blue",
+                            weight: 3,
+                            fill: false,
+                            fillColor: "transparent",
+                            fillOpacity: 0,
+                            opacity: 1,
+                            stroke: true
+                        };
+                    }
+  
+                    const color = props.borderColor || "#888";
+                    return {
+                        color: color,
+                        weight: 2,
+                        fillColor: color,
+                        fillOpacity: 0.4
+                    };
+                },
+                onEachFeature: function (feature, layer) {
+                    const props = feature.properties || {};
+  
+                    if (props.name) {
+                        layer.bindPopup(props.name);
+                    }
+  
+                    // جعل كل المباني والمناطق تتوهج عند التأشير
+                    layer.on('mouseover', function () {
+                        const path = layer.getElement();
+                        if (path) {
+                            path.classList.add('glow-path');
+                            layer.setStyle({ weight: 5 });
+                        }
+                    });
+  
+                    layer.on('mouseout', function () {
+                        const path = layer.getElement();
+                        if (path) {
+                            path.classList.remove('glow-path');
+                            layer.setStyle({ weight: props.name === "جامعه الطائف - طلاب" ? 3 : 2 });
+                        }
+                    });
+                }
+            }).addTo(map);
+  
+            loadingMessage.style.display = 'none';
+        })
+        .catch(error => {
+            loadingMessage.innerHTML = 'حدث خطأ أثناء تحميل البيانات';
+            console.error('GeoJSON Load Error:', error);
+        });
+  </script>
+  <script>
+    const translations = {
+        ar: {
+            explore: "استكشاف",
+            buildings: "المباني",
+            medical_admin: "الإدارة الطبية",
+            food: "الطعام",
+            places: "أماكني",
+            directions: "الاتجاهات",
+            reset: "إعادة تعيين",
+            setStart: "تحديد نقطة البداية",
+            setEnd: "تحديد نقطة النهاية",
+            walking: "مشياً",
+            driving: "بالسيارة",
+            showDirections: "عرض الاتجاهات",
+            events: "الأحداث",
+            eventsInfo: "لرؤية الأحداث وآخر التحديثات، قم بزيارة صفحة تويتر الرسمية:",
+            visitTwitter: "زيارة تويتر",
+            startPlaceholder: "ابحث أو انقر فوق الخريطة...",
+            endPlaceholder: "ابحث أو انقر فوق الخريطة...",
+            search: "بحث",
+            searchPlaceholder: "ابحث عن المبنى...",
+            welcome: "أهلاً بكم في جامعة الطائف",
+            loading: "جاري التحميل",
+            messageText: "خريطة تفاعلية لجامعة الطائف!",
+            colleges: "الكليات",
+            admin: "الإدارة",
+            library: "المكتبة",
+            mosques: "المساجد",
+            searchTitle: "آخر عمليات البحث",
+            noSearches: "لا توجد عمليات بحث سابقة.",
+            college: "كلية",
+            administration: "الإدارة",
+            medicalAdministration: "الإدارة الطبية",
+            libraryBuilding: "المكتبة",
+            mosque: "المسجد",
+            restaurant: "المطعم",
+            distanceInfo: "المسافة ستظهر هنا بعد تحديد النقطتين..."
+
+        },
+        en: {
+            explore: "Explore",
+            buildings: "Buildings",
+            medical_admin: "Medical Administration",
+            food: "Food",
+            places: "My Places",
+            directions: "Directions",
+            reset: "Reset",
+            setStart: "Set Start Point",
+            setEnd: "Set End Point",
+            walking: "Walking",
+            driving: "Driving",
+            showDirections: "Show Directions",
+            events: "Events",
+            eventsInfo: "For events and latest updates, visit the official Twitter page:",
+            visitTwitter: "Visit Twitter",
+            startPlaceholder: "Search or click on the map...",
+            endPlaceholder: "Search or click on the map...",
+            search: "Search",
+            searchPlaceholder: "Search for a building...",
+            welcome: "Welcome to Taif University",
+            loading: "Loading...",
+            messageText: "Interactive map of Taif University!",
+            colleges: "Colleges",
+            admin: "Administration",
+            library: "Library",
+            mosques: "Mosques",
+            searchTitle: "Recent Searches",
+            noSearches: "No recent searches.",
+            college: "College",
+            administration: "Administration",
+            medicalAdministration: "Medical Administration",
+            libraryBuilding: "Library",
+            mosque: "Mosque",
+            restaurant: "Restaurant",
+            distanceInfo: "The distance will appear here after selecting two points..."
+
+        }
+    };
+    
+    
+    function setLanguage(lang) {
+        const allKeys = document.querySelectorAll("[data-key]");
+        allKeys.forEach(el => {
+            const key = el.getAttribute("data-key");
+            if (translations[lang][key]) {
+                el.textContent = translations[lang][key];
+            }
+        });
+    
+        // تغيير placeholder لحقل البحث
+        const searchInput = document.getElementById("searchInput");
+        if (searchInput) {
+            searchInput.setAttribute("placeholder", translations[lang]["searchPlaceholder"]);
+        }
+    
+        // تغيير نص زر البحث
+        const searchButton = document.getElementById("searchButton");
+        if (searchButton) {
+            searchButton.textContent = translations[lang]["search"];
+        }
+    
+        // تغيير محتوى رسالة التنبيه
+        const messageText = document.getElementById("messageText");
+        if (messageText) {
+            messageText.textContent = translations[lang]["messageText"];
+        }
+    }
+    </script>
+    
+  <script>
+    // ربط عناصر البحث
+    const searchInput = document.getElementById("searchInput");
+    const suggestionsList = document.getElementById("suggestionsList");
+    
+    // توليد اقتراحات تلقائية من ملف buildings-data.js
+    const suggestions = buildings.map(b => ({
+        ar: b.name || "",
+        en: b.enName || ""
+    }));
+    
+    let selectedIndex = -1;
+    
+    // عند الكتابة
+    searchInput.addEventListener("input", function () {
+        const query = this.value.trim().toLowerCase();
+        suggestionsList.innerHTML = "";
+        selectedIndex = -1;
+    
+        if (!query) {
+            suggestionsList.style.display = "none";
+            return;
+        }
+    
+        const isArabic = /^[\u0600-\u06FF\s\d]+$/.test(query);
+        const langKey = isArabic ? "ar" : "en";
+    
+        const filtered = suggestions.filter(item =>
+            item[langKey].toLowerCase().includes(query)
+        );
+    
+        if (filtered.length > 0) {
+            filtered.forEach(item => {
+                const li = document.createElement("li");
+                li.textContent = item[langKey];
+                li.classList.add("suggestion-item");
+                li.addEventListener("click", function () {
+                    searchInput.value = item[langKey];
+                    suggestionsList.style.display = "none";
+                    searchBuilding();
+                });
+                suggestionsList.appendChild(li);
+            });
+            suggestionsList.style.display = "block";
+        } else {
+            suggestionsList.style.display = "none";
+        }
+    });
+    
+    // التنقل بين الاقتراحات بالأسهم والإنتر
+    searchInput.addEventListener("keydown", function (event) {
+        const items = suggestionsList.querySelectorAll("li");
+        if (suggestionsList.style.display === "block" && items.length > 0) {
+            if (event.key === "ArrowDown") {
+                event.preventDefault();
+                if (selectedIndex < items.length - 1) {
+                    selectedIndex++;
+                    updateSelection(items);
+                }
+            } else if (event.key === "ArrowUp") {
+                event.preventDefault();
+                if (selectedIndex > 0) {
+                    selectedIndex--;
+                    updateSelection(items);
+                }
+            } else if (event.key === "Enter") {
+                event.preventDefault();
+                if (selectedIndex >= 0 && selectedIndex < items.length) {
+                    searchInput.value = items[selectedIndex].textContent;
+                    suggestionsList.style.display = "none";
+                }
+                searchBuilding();
+            }
+        }
+    });
+    
+    // تفعيل التحديد
+    function updateSelection(items) {
+        items.forEach((item, index) => {
+            if (index === selectedIndex) {
+                item.classList.add("highlight");
+                item.scrollIntoView({ block: "nearest" });
+            } else {
+                item.classList.remove("highlight");
+            }
+        });
+    }
+    
+    // إخفاء الاقتراحات عند الضغط بالخارج
+    document.addEventListener("click", function (e) {
+        if (!document.querySelector(".search-container").contains(e.target)) {
+            suggestionsList.style.display = "none";
+        }
+    });
+    </script>
+    
+
+</body>
+</html>
