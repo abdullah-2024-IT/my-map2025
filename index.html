@@ -921,7 +921,11 @@ text-align:center; font-size:18px; min-width:250px;">
             .then(res => res.json())
             .then(data => {
                 L.geoJSON(data, {
-                    style: function (feature) {
+                    filter: function(feature) {
+                        // ✅ تجاهل النقاط (Point) ولا ترسم إلا المباني (Polygon/MultiPolygon)
+                        return feature.geometry.type !== 'Point';
+                    },
+                    style: function(feature) {
                         const props = feature.properties || {};
         
                         if (props.name === "جامعه الطائف - طلاب") {
@@ -943,7 +947,7 @@ text-align:center; font-size:18px; min-width:250px;">
                             fillOpacity: 0.4
                         };
                     },
-                    onEachFeature: function (feature, layer) {
+                    onEachFeature: function(feature, layer) {
                         const props = feature.properties || {};
         
                         if (props.name) {
@@ -962,20 +966,20 @@ text-align:center; font-size:18px; min-width:250px;">
                             }
                         });
         
-                        layer.on('mouseover', function () {
-                            const path = layer.getElement();
+                        layer.on('mouseover', function() {
+                            const path = layer.getElement && layer.getElement();
                             if (path) {
                                 path.classList.add('glow-path');
                                 const original = buildingLayers.find(b => b.layer === layer).originalStyle;
                                 layer.setStyle({ 
                                     weight: 8, 
-                                    color: original.color // ✅ نفس لون حدود المبنى
+                                    color: original.color 
                                 });
                             }
                         });
         
-                        layer.on('mouseout', function () {
-                            const path = layer.getElement();
+                        layer.on('mouseout', function() {
+                            const path = layer.getElement && layer.getElement();
                             if (path) {
                                 path.classList.remove('glow-path');
                                 const original = buildingLayers.find(b => b.layer === layer).originalStyle;
@@ -1093,6 +1097,7 @@ text-align:center; font-size:18px; min-width:250px;">
         </script>
         
         
+        
 
 
 
@@ -1116,15 +1121,15 @@ text-align:center; font-size:18px; min-width:250px;">
 </script>
 <script>
     const map = L.map('map').setView([21.433, 40.495], 17);
-  
+
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 20,
         attribution: '© OpenStreetMap'
     }).addTo(map);
-  
+
     const loadingMessage = document.getElementById('loadingMessage');
     loadingMessage.style.display = 'block';
-  
+
     fetch('tu_map_force_colored.geojson')
         .then(res => {
             if (!res.ok) throw new Error('فشل تحميل البيانات');
@@ -1132,41 +1137,13 @@ text-align:center; font-size:18px; min-width:250px;">
         })
         .then(data => {
             L.geoJSON(data, {
-                pointToLayer: function (feature, latlng) {
-                    const props = feature.properties || {};
-                    const color = props.markerColor || "#3388ff";
-  
-                    const marker = L.circleMarker(latlng, {
-                        radius: 8,
-                        fillColor: color,
-                        color: "#000",
-                        weight: 1,
-                        opacity: 1,
-                        fillOpacity: 0.9
-                    });
-  
-                    // كل النقاط تتوهج عند المرور عليها
-                    marker.on('mouseover', function () {
-                        const path = marker.getElement();
-                        if (path) {
-                            path.classList.add('glow-path');
-                            marker.setStyle({ weight: 3 });
-                        }
-                    });
-  
-                    marker.on('mouseout', function () {
-                        const path = marker.getElement();
-                        if (path) {
-                            path.classList.remove('glow-path');
-                            marker.setStyle({ weight: 1 });
-                        }
-                    });
-  
-                    return marker;
+                // ✅ إضافة فلتر لمنع رسم النقاط (Point)
+                filter: function (feature) {
+                    return feature.geometry.type !== 'Point';
                 },
                 style: function (feature) {
                     const props = feature.properties || {};
-  
+
                     if (props.name === "جامعه الطائف - طلاب") {
                         return {
                             color: "blue",
@@ -1178,7 +1155,7 @@ text-align:center; font-size:18px; min-width:250px;">
                             stroke: true
                         };
                     }
-  
+
                     const color = props.borderColor || "#888";
                     return {
                         color: color,
@@ -1189,22 +1166,22 @@ text-align:center; font-size:18px; min-width:250px;">
                 },
                 onEachFeature: function (feature, layer) {
                     const props = feature.properties || {};
-  
+
                     if (props.name) {
                         layer.bindPopup(props.name);
                     }
-  
+
                     // جعل كل المباني والمناطق تتوهج عند التأشير
                     layer.on('mouseover', function () {
-                        const path = layer.getElement();
+                        const path = layer.getElement && layer.getElement();
                         if (path) {
                             path.classList.add('glow-path');
                             layer.setStyle({ weight: 5 });
                         }
                     });
-  
+
                     layer.on('mouseout', function () {
-                        const path = layer.getElement();
+                        const path = layer.getElement && layer.getElement();
                         if (path) {
                             path.classList.remove('glow-path');
                             layer.setStyle({ weight: props.name === "جامعه الطائف - طلاب" ? 3 : 2 });
@@ -1212,14 +1189,16 @@ text-align:center; font-size:18px; min-width:250px;">
                     });
                 }
             }).addTo(map);
-  
+
             loadingMessage.style.display = 'none';
         })
         .catch(error => {
             loadingMessage.innerHTML = 'حدث خطأ أثناء تحميل البيانات';
             console.error('GeoJSON Load Error:', error);
         });
-  </script>
+</script>
+
+
   <script>
     const translations = {
         ar: {
