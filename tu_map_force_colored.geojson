@@ -962,7 +962,7 @@
         "type": "Polygon"
       },
     "properties": {
-  "name": "(4)- الإدارة العليا - Senior Administration",
+  "name": "(4)- الإدارة العليا - Senior Administration- مكتب مدير الجامعة - مكتب وكيل الجامعة",
   "borderColor": "#004085",
   "markerColor": "#004085",
   "room": 4000,
@@ -3091,7 +3091,7 @@
         "type": "Polygon"
       },
       "properties": {
-        "name": "(36)- مبنى وكلاء الجامعة - University Vice Rectors' Building",
+        "name": "(36)- مبنى وكلاء الجامعة - University Vice Rectors' Building- المجلس العلمي",
         "_umap_options": {
           "color": "MidnightBlue"
         },
