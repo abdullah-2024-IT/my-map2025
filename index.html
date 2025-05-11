@@ -1,361 +1,440 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<!DOCTYPE html> <!-- تعريف نوع المستند بأنه HTML5 -->
+<html lang="ar" dir="rtl"> <!-- بدء صفحة HTML مع تحديد اللغة عربية والاتجاه من اليمين لليسار -->
 <head>
-    <meta charset="UTF-8">
-    <title>خريطة الجامعة - جامعة الطائف</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="/path/to/buildings-data.js"></script>
-<style>
-.search-container input {
-    width: 300px;
-    padding: 7px 12px;
-    font-size: 14px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-}
-</style>
-<style>
+    <meta charset="UTF-8"> <!-- تحديد ترميز الأحرف ليكون UTF-8 لدعم اللغة العربية -->
+    <title>خريطة الجامعة - جامعة الطائف</title> <!-- عنوان الصفحة الذي يظهر في التبويب -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- ضبط عرض الصفحة لتناسب الشاشات الصغيرة -->
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" /> <!-- استدعاء مكتبة Leaflet الخاصة بالخرائط -->
+    <script src="/path/to/buildings-data.js"></script> <!-- استدعاء ملف بيانات المباني -->
+
+    <style>
+    /* ✅ تنسيق حقل البحث */
+    .search-container input {
+        width: 300px; /* تحديد عرض حقل البحث بـ 300 بكسل */
+        padding: 7px 12px; /* تحديد الحشو الداخلي (7 بكسل أعلى وأسفل، 12 بكسل يمين ويسار) */
+        font-size: 14px; /* تحديد حجم خط النص داخل حقل الإدخال */
+        border-radius: 6px; /* تدوير زوايا الحقل بمقدار 6 بكسل */
+        border: 1px solid #ccc; /* إضافة إطار رفيع بلون رمادي فاتح */
+    }
+    </style>
+
+    <style>
     /* ✅ ستايل لتغيير شكل المؤشر إلى دبوس */
     .cursor-pin {
-        cursor: url('https://maps.gstatic.com/mapfiles/api-3/images/spotlight-poi2_hdpi.png') 16 32, auto;
+        cursor: url('https://maps.gstatic.com/mapfiles/api-3/images/spotlight-poi2_hdpi.png') 16 32, auto; 
+        /* تغيير شكل المؤشر إلى دبوس عند المرور فوق عناصر معينة */
     }
     </style>
-    
-<style>
+
+    <style>
+    /* ✅ ستايل زر الاتجاهات */
     .direction-button {
-        padding: 12px 20px;
-        background-color: #007bff;
-        color: white;
-        font-size: 1.2em;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: background-color 0.3s, transform 0.2s;
-        width: 100%;
+        padding: 12px 20px; /* حشو داخلي: 12 بكسل أعلى وأسفل، 20 بكسل يمين ويسار */
+        background-color: #007bff; /* لون خلفية أزرق */
+        color: white; /* لون الخط أبيض */
+        font-size: 1.2em; /* حجم الخط أكبر قليلاً */
+        border: none; /* بدون حدود للزر */
+        border-radius: 8px; /* تدوير زوايا الزر بمقدار 8 بكسل */
+        cursor: pointer; /* تغيير شكل المؤشر إلى يد عند المرور فوق الزر */
+        transition: background-color 0.3s, transform 0.2s; /* تأثير انتقالي للون الخلفية والتحجيم */
+        width: 100%; /* جعل عرض الزر يأخذ 100% من الحاوية */
     }
-    
+
     .direction-button:hover {
-        background-color: #0056b3;
-        transform: scale(1.05);
+        background-color: #0056b3; /* عند التمرير على الزر: تغيير اللون إلى أزرق غامق */
+        transform: scale(1.05); /* تكبير الزر بنسبة بسيطة عند المرور عليه */
     }
     </style>
-<style>
+
+    <style>
+    /* ✅ ستايل قائمة الفئات */
     .category-list li {
-        display: flex;
-        align-items: center;
-        cursor: pointer;
-        padding: 8px;
-        transition: transform 0.2s ease, background-color 0.2s ease;
-        border-radius: 8px;
+        display: flex; /* ترتيب المحتويات بداخل العنصر بشكل أفقي */
+        align-items: center; /* محاذاة المحتويات عموديًا بالمنتصف */
+        cursor: pointer; /* جعل المؤشر على شكل يد */
+        padding: 8px; /* إضافة حشو داخلي بمقدار 8 بكسل */
+        transition: transform 0.2s ease, background-color 0.2s ease; /* تأثيرات انتقالية للتحجيم وتغيير الخلفية */
+        border-radius: 8px; /* تدوير زوايا العنصر */
     }
 
     .category-list li img {
-        width: 24px;
-        height: 24px;
-        margin-left: 8px;
-        transition: transform 0.2s ease;
+        width: 24px; /* تحديد عرض الصور داخل العنصر بـ 24 بكسل */
+        height: 24px; /* تحديد ارتفاع الصور أيضًا بـ 24 بكسل */
+        margin-left: 8px; /* إضافة مسافة يسار الصورة بمقدار 8 بكسل */
+        transition: transform 0.2s ease; /* تأثير انتقالي لتحجيم الصورة */
     }
 
     /* عند المرور Hover */
     .category-list li:hover {
-        transform: scale(1.05);
-        background-color: #f0f0f0;
+        transform: scale(1.05); /* تكبير العنصر عند المرور عليه */
+        background-color: #f0f0f0; /* تغيير لون الخلفية إلى رمادي فاتح */
     }
 
     /* عند الضغط Active */
     .category-list li:active {
-        transform: scale(0.95);
-        background-color: #e0e0e0;
+        transform: scale(0.95); /* تصغير العنصر قليلاً عند الضغط */
+        background-color: #e0e0e0; /* تغيير لون الخلفية إلى رمادي أغمق */
     }
 
     .category-list li span {
-        font-size: 16px;
-        color: black;
+        font-size: 16px; /* تحديد حجم خط النص داخل العنصر */
+        color: black; /* جعل لون النص أسود */
     }
+    </style>
+
+    <style>
+    /* 💻 ستايل الهيدر والشريط الجانبي للشاشات الكبيرة */
+    header {
+        height: 80px; /* تحديد ارتفاع الهيدر بـ 80 بكسل */
+        background-color: #f8f8f8; /* تعيين لون خلفية فاتح للهيدر */
+        display: flex; /* استخدام Flexbox لترتيب العناصر بشكل أفقي */
+        align-items: center; /* محاذاة العناصر عموديًا في المنتصف */
+        justify-content: space-between; /* توزيع العناصر مع ترك مسافة بينها */
+        padding: 0 20px; /* هوامش داخلية: 20 بكسل يمين ويسار */
+    }
+
+    header img {
+        height: 60px; /* تحديد ارتفاع شعار الجامعة أو الصورة داخل الهيدر */
+    }
+
+    header h1 {
+        font-size: 28px; /* تحديد حجم خط عنوان الهيدر */
+    }
+
+    /* ✅ ستايل الشريط الجانبي */
+    .sidebar {
+        width: 250px; /* تحديد عرض الشريط الجانبي بـ 250 بكسل */
+        float: right; /* جعل الشريط الجانبي يظهر على اليمين */
+        background-color: #ddd; /* تعيين لون خلفية العنصر إلى رمادي فاتح (الرمز #ddd) */
+
+    }
+    
+    /* 📱 لما تكون الشاشة أقل من 768px (جوال) */
+@media (max-width: 768px) { /* تطبيق التنسيقات التالية للشاشات بعرض أقل من 768 بكسل */
+    header { /* تهيئة الهيدر */
+        height: auto; /* جعل ارتفاع الهيدر آلي حسب محتواه */
+        flex-direction: column; /* ترتيب عناصر الهيدر عموديًا فوق بعض */
+        padding: 10px; /* إضافة حشو داخلي بمقدار 10 بكسل */
+    }
+
+    header img { /* تهيئة صورة الشعار داخل الهيدر */
+        height: 40px; /* تصغير ارتفاع الشعار إلى 40 بكسل */
+    }
+
+    header h1 { /* تهيئة عنوان الهيدر */
+        font-size: 20px; /* تصغير حجم الخط في عنوان الهيدر */
+    }
+
+    .sidebar { /* تهيئة الشريط الجانبي */
+        width: 100%; /* جعل عرض الشريط الجانبي 100% من عرض الشاشة */
+        float: none; /* إزالة خاصية float لأنه ليس مطلوبًا في الجوال */
+    }
+}
 </style>
 
 <style>
-    /* ✅ الشريط الجانبي الأساسي (موجود عندك سابقاً) */
-    .sidebar .icon img {
-        width: 40px;
-        height: 40px;
-        transition: transform 0.3s ease; /* ✅ حركة ناعمة عند التكبير */
-    }
-    
-    /* ✅ عند المرور على الأيقونة */
-    .sidebar .icon:hover img {
-        transform: scale(1.2); /* ✅ تكبير بنسبة 20% عند المرور */
-    }
-    
-    /* ✅ أيضاً تكبير النص مع الأيقونة لو أردت */
-    .sidebar .icon:hover span {
-        font-size: 16px; /* اختيارياً: تكبير الكتابة قليلاً عند المرور */
-    }
-    </style>
-    
-    <style>
-        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: Arial, sans-serif; }
-        #map { height: 100vh; width: 100%; position: absolute; top: 0; right: 0; z-index: 0; }
-        #loadingMessage {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 20px;
-            color: #007BFF;
-            z-index: 1000;
-            display: none;
-        }
+/* ✅ الشريط الجانبي الأساسي (موجود عندك سابقاً) */
+.sidebar .icon img { /* تهيئة صورة الأيقونة داخل الشريط الجانبي */
+    width: 40px; /* تحديد عرض الأيقونة بـ 40 بكسل */
+    height: 40px; /* تحديد ارتفاع الأيقونة بـ 40 بكسل */
+    transition: transform 0.3s ease; /* إضافة حركة ناعمة عند التكبير */
+}
 
-        /* ✅ الشريط الجانبي أسود والكتابة بيضاء وتكبير الأيقونات */
-        .sidebar {
-            position: fixed;
-            top: 0;
-            right: 0;
-            width: 80px; /* أكبر قليلاً */
-            height: 100%;
-            background-color: #000;
-            border-left: 1px solid #333;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding-top: 10px;
-            z-index: 1001;
-        }
+/* ✅ عند المرور على الأيقونة */
+.sidebar .icon:hover img { /* عند تمرير الماوس فوق الأيقونة */
+    transform: scale(1.2); /* تكبير الأيقونة بنسبة 20% */
+}
 
-        .sidebar .icon {
-            margin: 20px 0;
-            cursor: pointer;
-            text-align: center;
-            color: white;
-        }
+/* ✅ أيضاً تكبير النص مع الأيقونة لو أردت */
+.sidebar .icon:hover span { /* عند تمرير الماوس فوق العنصر النصي */
+    font-size: 16px; /* تكبير حجم الخط قليلاً عند المرور */
+}
+</style>
 
-        .sidebar .icon img {
-            width: 40px; /* ✅ تكبير الأيقونات */
-            height: 40px;
-        }
+<style>
+/* ✅ إعدادات أساسية للصفحة */
+body, html { /* تهيئة عنصر الـ body و html */
+    margin: 0; /* إزالة الهوامش الافتراضية */
+    padding: 0; /* إزالة الحشو الافتراضي */
+    height: 100%; /* جعل الارتفاع 100% من نافذة المتصفح */
+    overflow: hidden; /* منع ظهور شريط التمرير */
+    font-family: Arial, sans-serif; /* تعيين نوع الخط */
+}
 
-        .sidebar .icon span {
-            font-size: 14px;
-            display: block;
-            margin-top: 5px;
-            color: white;
-        }
+#map { /* تهيئة خريطة Leaflet */
+    height: 100vh; /* جعل ارتفاع الخريطة يملأ كامل ارتفاع النافذة */
+    width: 100%; /* جعل عرض الخريطة يملأ كامل عرض النافذة */
+    position: absolute; /* تحديد موضع الخريطة بشكل مطلق */
+    top: 0; /* وضع الخريطة من أعلى الصفحة */
+    right: 0; /* محاذاة الخريطة إلى الجهة اليمنى */
+    z-index: 0; /* وضع الخريطة في الخلفية */
+}
 
-        .sub-sidebar {
-            position: fixed;
-            top: 0;
-            right: 80px; /* تم تعديله ليتناسب مع حجم الشريط الجديد */
-            width: 220px;
-            height: 100%;
-            background-color: #111;
-            border-left: 1px solid #333;
-            padding: 10px;
-            overflow-y: auto;
-            display: none;
-            z-index: 1000;
-            color: white;
-        }
+#loadingMessage { /* تهيئة رسالة التحميل */
+    position: fixed; /* تثبيت الرسالة في مكان ثابت */
+    top: 50%; /* وضع الرسالة في منتصف ارتفاع الشاشة */
+    left: 50%; /* وضع الرسالة في منتصف عرض الشاشة */
+    transform: translate(-50%, -50%); /* ضبط الرسالة تمامًا في المنتصف */
+    font-size: 20px; /* تحديد حجم الخط */
+    color: #007BFF; /* لون الخط أزرق */
+    z-index: 1000; /* وضع الرسالة فوق الخريطة */
+    display: none; /* إخفاء الرسالة افتراضيًا */
+}
 
-        .sub-sidebar h3, .sub-sidebar span, .sub-sidebar p {
-            color: white;
-        }
+/* ✅ الشريط الجانبي أسود والكتابة بيضاء وتكبير الأيقونات */
+.sidebar { /* تهيئة الشريط الجانبي */
+    position: fixed; /* تثبيت الشريط الجانبي في مكانه */
+    top: 0; /* بداية من أعلى الصفحة */
+    right: 0; /* محاذاة للشمال (اتجاه RTL يعني جهة اليمين) */
+    width: 80px; /* تحديد عرض الشريط الجانبي بـ 80 بكسل */
+    height: 100%; /* جعل ارتفاعه 100% من ارتفاع الصفحة */
+    background-color: #000; /* لون خلفيته أسود */
+    border-left: 1px solid #333; /* إضافة خط فاصل رمادي غامق على يساره */
+    display: flex; /* استخدام Flexbox لترتيب الأيقونات عموديًا */
+    flex-direction: column; /* جعل اتجاه العناصر عمودي */
+    align-items: center; /* محاذاة الأيقونات في منتصف المحور الأفقي */
+    padding-top: 10px; /* إضافة حشو علوي بمقدار 10 بكسل */
+    z-index: 1001; /* وضع الشريط فوق بقية العناصر */
+}
 
-        #messageBox {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.9);
-            color: white;
-            padding: 20px 30px;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 0 30px rgba(0,0,0,0.5);
-            z-index: 2000;
-            display: none;
-        }
+.sidebar .icon { /* تهيئة حاوية الأيقونة */
+    margin: 20px 0; /* إضافة مسافة فوق وتحت كل أيقونة */
+    cursor: pointer; /* تغيير شكل المؤشر ليد قابل للنقر */
+    text-align: center; /* توسيط محتوى الأيقونة والنص */
+    color: white; /* جعل لون النص أبيض */
+}
 
-        #messageBox button {
-            margin-top: 10px;
-            padding: 10px 20px;
-            background-color: #1e90ff;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-        }
+.sidebar .icon img { /* تهيئة صورة الأيقونة */
+    width: 40px; /* عرض الأيقونة 40 بكسل */
+    height: 40px; /* ارتفاع الأيقونة 40 بكسل */
+}
 
-        /* زر تويتر */
-        .twitter-button {
-            display: inline-block;
-            margin-top: 15px;
-            padding: 10px 20px;
-            background-color: #1da1f2;
-            color: white;
-            border-radius: 5px;
-            text-decoration: none;
-            text-align: center;
-        }
+.sidebar .icon span { /* تهيئة نص الأيقونة */
+    font-size: 14px; /* حجم الخط 14 بكسل */
+    display: block; /* عرض النص كسطر مستقل */
+    margin-top: 5px; /* إضافة مسافة فوق النص */
+    color: white; /* لون النص أبيض */
+}
 
-        /* تأثير التوهج */
-        svg .glow-path {
-            filter: url(#glow-filter);
-        }
-    </style>
-    <style>
-        .topbar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 60px;
-            background-color: white;
-            z-index: 2000;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 20px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            direction: rtl;
-        }
-        
-        .language-switch {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: bold;
-            font-size: 14px;
-        }
-        
-        .language-switch button {
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        
-        .search-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 6px;
-        }
-        
-        .search-container input {
-            width: 300px;
-            padding: 7px 77px;
-            font-size: 15px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-        }
-        
-        .search-container button {
-            padding: 8px 16px;
-            background-color: #007bff;
-            border: none;
-            color: white;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        
-        .logo img {
-            width: 45px;
-            cursor: pointer;
-        }
+.sub-sidebar { /* تهيئة الشريط الفرعي */
+    position: fixed; /* تثبيته في مكان ثابت */
+    top: 0; /* بداية من أعلى الصفحة */
+    right: 80px; /* وضعه على بعد 80 بكسل من الجهة اليمنى (جنب الشريط الأساسي) */
+    width: 220px; /* تحديد عرضه 220 بكسل */
+    height: 100%; /* جعل ارتفاعه 100% */
+    background-color: #111; /* خلفية داكنة جدًا */
+    border-left: 1px solid #333; /* إضافة خط فاصل رمادي غامق على يساره */
+    padding: 10px; /* حشو داخلي 10 بكسل */
+    overflow-y: auto; /* تمكين التمرير العمودي عند زيادة المحتوى */
+    display: none; /* إخفاؤه افتراضيًا */
+    z-index: 1000; /* وضعه فوق الخريطة وتحت الشريط الأساسي */
+    color: white; /* لون النص أبيض */
+}
+
+.sub-sidebar h3, .sub-sidebar span, .sub-sidebar p { /* استهداف عناوين الفئة والفقرات داخل الشريط الفرعي */  
+    color: white; /* جعل لون النص أبيض */  
+}
+
+#messageBox { /* بدء إعداد صندوق الرسائل المنبثق */  
+    position: fixed; /* تثبيت الصندوق بموقع ثابت على الشاشة */  
+    top: 50%; /* وضعه في منتصف ارتفاع الشاشة */  
+    left: 50%; /* وضعه في منتصف عرض الشاشة */  
+    transform: translate(-50%, -50%); /* تعويض النقطة المرجعية لجعل الصندوق في المنتصف تمامًا */  
+    background: rgba(0, 0, 0, 0.9); /* خلفية سوداء شبه شفافة بقيمة 0.9 */  
+    color: white; /* جعل لون النص أبيض */  
+    padding: 20px 30px; /* حشو داخلي: 20 بكسل عمودي، 30 بكسل أفقي */  
+    border-radius: 15px; /* تدوير زوايا الصندوق بمقدار 15 بكسل */  
+    text-align: center; /* توسيط النص داخل الصندوق */  
+    box-shadow: 0 0 30px rgba(0,0,0,0.5); /* إضافة ظل خارجي ناعم */  
+    z-index: 2000; /* وضع الصندوق فوق معظم العناصر */  
+    display: none; /* إخفاؤه افتراضيًا */  
+}
+
+#messageBox button { /* إعداد زر داخل صندوق الرسائل */  
+    margin-top: 10px; /* مسافة فوق الزر */  
+    padding: 10px 20px; /* حشو داخلي: 10 بكسل عمودي، 20 بكسل أفقي */  
+    background-color: #1e90ff; /* لون خلفية أزرق داكن */  
+    color: white; /* لون نص الزر أبيض */  
+    border: none; /* إزالة الحدود الافتراضية */  
+    border-radius: 8px; /* تدوير زوايا الزر */  
+    cursor: pointer; /* تغيير شكل المؤشر إلى يد */  
+}
+
+/* زر تويتر */ /* علامة بداية بلوك إعداد زر تويتر */  
+.twitter-button { /* إعداد زر تويتر كرابط */  
+    display: inline-block; /* عرضه ككتلة ضمن النص */  
+    margin-top: 15px; /* مسافة فوق الزر */  
+    padding: 10px 20px; /* حشو داخلي: 10 بكسل عمودي، 20 بكسل أفقي */  
+    background-color: #1da1f2; /* لون خلفية تويتر الأزرق */  
+    color: white; /* لون نص الزر أبيض */  
+    border-radius: 5px; /* تدوير زوايا الزر قليلاً */  
+    text-decoration: none; /* إزالة خط التحتي */  
+    text-align: center; /* توسيط النص داخل الزر */  
+}
+
+/* تأثير التوهج */ /* علامة بداية بلوك فلتر التوهج */  
+svg .glow-path { /* استهداف المسارات الحاملة لصنف التوهج داخل SVG */  
+    filter: url(#glow-filter); /* تطبيق فلتر التوهج عبر معرّف الفلتر */  
+}
+</style>
+
+<style>
+.topbar { /* إعداد شريط القمة */  
+    position: fixed; /* تثبيته في أعلى الصفحة */  
+    top: 0; /* بداية من أعلى النافذة */  
+    left: 0; /* بداية من اليسار */  
+    right: 0; /* حتى الحافة اليمنى */  
+    height: 60px; /* ارتفاع الشريط 60 بكسل */  
+    background-color: white; /* خلفية بيضاء */  
+    z-index: 2000; /* فوق معظم العناصر */  
+    display: flex; /* استخدام Flexbox لترتيب المحتوى */  
+    align-items: center; /* محاذاة عموديًا في المنتصف */  
+    justify-content: space-between; /* توزيع المحتوى مع مساحة متساوية */  
+    padding: 0 20px; /* حشو أفقي 20 بكسل */  
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* ظل خفيف أسفل الشريط */  
+    direction: rtl; /* اتجاه الكتابة من اليمين لليسار */  
+}
+
+.language-switch { /* إعداد حاوية تبديل اللغة */  
+    display: flex; /* ترتيب الأزرار أفقيًا */  
+    align-items: center; /* محاذاة عموديًا */  
+    gap: 8px; /* مسافة 8 بكسل بين العناصر */  
+    font-weight: bold; /* جعل النص عريضًا */  
+    font-size: 14px; /* حجم خط 14 بكسل */  
+}
+
+.language-switch button { /* إعداد أزرار لغة الشريط */  
+    background: none; /* إزالة الخلفية */  
+    border: none; /* إزالة الحدود */  
+    cursor: pointer; /* تغيير المؤشر إلى يد */  
+    font-weight: bold; /* جعل النص عريضًا */  
+}
+
+.search-container { /* إعداد حاوية البحث داخل الشريط */  
+    display: flex; /* ترتيب حقل البحث والزر أفقيًا */  
+    justify-content: center; /* توسيطهم أفقيًا */  
+    align-items: center; /* محاذاتهم عموديًا */  
+    gap: 6px; /* مسافة 6 بكسل بينهم */  
+}
+
+.search-container input { /* إعداد حقل الإدخال للبحث */  
+    width: 300px; /* عرض الحقل 300 بكسل */  
+    padding: 7px 77px; /* حشو داخلي: 7 بكسل عمودي، 77 بكسل أفقي */  
+    font-size: 15px; /* حجم خط 15 بكسل */  
+    border-radius: 6px; /* تدوير زوايا الحقل */  
+    border: 1px solid #ccc; /* إطار رمادي فاتح رفيع */  
+}
+
+.search-container button { /* إعداد زر البحث */  
+    padding: 8px 16px; /* حشو داخلي: 8 بكسل عمودي، 16 بكسل أفقي */  
+    background-color: #007bff; /* خلفية زرقاء */  
+    border: none; /* إزالة الحدود */  
+    color: white; /* لون النص أبيض */  
+    border-radius: 6px; /* تدوير زوايا الزر */  
+    cursor: pointer; /* تغيير المؤشر إلى يد */  
+    font-weight: bold; /* جعل النص عريضًا */  
+}
+
+.logo img { /* إعداد صورة الشعار داخل الشريط */  
+    width: 45px; /* عرض الشعار 45 بكسل */  
+    cursor: pointer; /* تغيير المؤشر إلى يد عند المرور فوقها */  
+}
+
+#visitTwitter:hover { /* تأثير عند تمرير الماوس على زر تويتر */  
+    box-shadow: 0 0 15px #007bff, 0 0 25px #007bff; /* توهج أزرق حول الزر */  
+}
         </style>
         <style>
-            #visitTwitter:hover {
-                box-shadow: 0 0 15px #007bff, 0 0 25px #007bff;
+            .search-container input { /* تهيئة حقل البحث */
+                width: 300px; /* تحديد عرض مربع البحث بـ 300 بكسل */
+                padding: 7px 12px; /* إضافة حشو داخلي: 7 بكسل فوق وتحت، 12 بكسل يمين ويسار */
+                font-size: 15px; /* تحديد حجم الخط داخل مربع البحث */
+                border-radius: 6px; /* تدوير زوايا مربع البحث بمقدار 6 بكسل */
+                border: 1px solid #ccc; /* إضافة إطار رفيع بلون رمادي فاتح */
             }
-        </style>
-        <style>
-            .search-container input {
-                width: 300px; /* ✅ عرض مربع البحث */
-                padding: 7px 12px; /* ✅ ارتفاع مريح ومسافة داخلية مناسبة */
-                font-size: 15px; /* ✅ حجم الخط داخل مربع البحث */
-                border-radius: 6px;
-                border: 1px solid #ccc;
-            }
-            
+        
             /* ✅ تنسيق قائمة الاقتراحات */
-            #suggestionsList {
-                position: absolute;
-                top: 100%;
-                right: 0;
-                width: 600px; /* ✅ نفس عرض مربع البحث */
-                max-height: 250px; /* ✅ ارتفاع مناسب للتمرير */
-                background: white;
-                border: 1px solid #ccc;
-                overflow-y: auto;
-                padding: 0;
-                margin: 2px 0 0;
-                list-style: none;
-                border-radius: 0 0 6px 6px; /* ✅ تقريب الزوايا السفلية للاقتراب من تصميم البحث */
-                z-index: 3000;
+            #suggestionsList { /* تهيئة قائمة الاقتراحات المنبثقة */
+                position: absolute; /* تحديد وضع القائمة بشكل مطلق بالنسبة للحاوية */
+                top: 100%; /* وضع القائمة أسفل حقل البحث مباشرة */
+                right: 0; /* محاذاة القائمة إلى اليمين */
+                width: 600px; /* جعل عرض القائمة مساوٍ لعرض مربع البحث */
+                max-height: 250px; /* تحديد أقصى ارتفاع مع تفعيل التمرير */
+                background: white; /* تعيين خلفية بيضاء للقائمة */
+                border: 1px solid #ccc; /* إضافة إطار رمادي فاتح حولها */
+                overflow-y: auto; /* تفعيل التمرير الرأسي عند زيادة المحتوى */
+                padding: 0; /* إزالة الحشو الافتراضي للقائمة */
+                margin: 2px 0 0; /* وضع مسافة 2 بكسل فوق القائمة وفصل عن العناصر أسفل */
+                list-style: none; /* إزالة علامات النقط من القائمة */
+                border-radius: 0 0 6px 6px; /* تدوير الزوايا السفلية بمقدار 6 بكسل */
+                z-index: 3000; /* رفع القائمة فوق العناصر الأخرى */
             }
-            
+        
             /* ✅ تنسيق العناصر داخل قائمة الاقتراحات */
-            #suggestionsList li {
-                padding: 10px 12px; /* ✅ مسافة داخلية مشابهة للبحث */
-                cursor: pointer;
-                font-size: 15px; /* ✅ نفس حجم خط مربع البحث */
-                border-bottom: 1px solid #eee;
+            #suggestionsList li { /* تهيئة كل عنصر اقتراح */
+                padding: 10px 12px; /* حشو داخلي لتوفير مساحة مريحة للنص */
+                cursor: pointer; /* تغيير المؤشر لليد عند المرور */
+                font-size: 15px; /* جعل حجم الخط مطابقًا لحجم حقل البحث */
+                border-bottom: 1px solid #eee; /* إضافة خط فاصل خفيف بين العناصر */
             }
-            
-            /* ✅ تأثير عند المرور على عنصر اقتراح */
+        
+            /* ✅ تأثير عند المرور أو التحديد */
             #suggestionsList li:hover,
-            #suggestionsList li.highlight {
-                background-color: #007bff;
-                color: white;
+            #suggestionsList li.highlight { /* عند المرور أو وجود الصنف "highlight" */
+                background-color: #007bff; /* تغيير الخلفية إلى أزرق */
+                color: white; /* جعل النص أبيض لتباين جيد */
             }
-            </style>
-            
-            <style>
-                @keyframes spin {
-                    0% { transform: rotate(0deg); }
-                    100% { transform: rotate(360deg); }
-                }
-                </style>
-                
-</head>
-<!-- ✅ شاشة التحميل -->
-<div id="loadingScreen" style="
-    position: fixed; 
-    top: 0; 
-    left: 0; 
-    width: 100%; 
-    height: 100%; 
-    background: linear-gradient(to bottom right, #007bff, #66b3ff); 
-    display: flex; 
-    flex-direction: column; 
-    justify-content: center; 
-    align-items: center; 
-    z-index: 3000;
-">
-<img src="/images/شعار_جامعة_الطائف_السعودية.jpg" alt="شعار الجامعة" style="
-width: 720px; 
-max-width: 80%; 
-border-radius: 20px; 
-box-shadow: 0 4px 20px rgba(0,0,0,0.3); 
-margin-bottom: 30px;
-">
-
-    <div style="display: flex; align-items: center; gap: 12px;">
-        <span style="font-size: 22px; font-weight: bold; color: white;">جاريي التحميل...</span>
-        <div class="spinner" style="
-            width: 28px; 
-            height: 28px; 
-            border: 4px solid white; 
-            border-top: 4px solid transparent; 
-            border-radius: 50%; 
-            animation: spin 1s linear infinite;">
+        </style>
+        
+        <style>
+            /* ✅ تعريف حركة الدوران */
+            @keyframes spin { /* إنشاء أنيميشن باسم spin */
+                0%   { transform: rotate(0deg); } /* بداية الحركة بدون دوران */
+                100% { transform: rotate(360deg); } /* نهاية الحركة بدوران كامل */
+            }
+        </style>
+        
+        </head>
+        
+        <!-- ✅ شاشة التحميل -->
+        <div id="loadingScreen" style="
+            position: fixed; /* تثبيت الشاشة فوق كل المحتوى */
+            top: 0; /* من أعلى النافذة */
+            left: 0; /* من اليسار */
+            width: 100%; /* عرض كامل الشاشة */
+            height: 100%; /* ارتفاع كامل الشاشة */
+            background: linear-gradient(to bottom right, #007bff, #66b3ff); /* تدرج لوني أزرق جذاب */
+            display: flex; /* استخدام Flexbox لترتيب المحتويات */
+            flex-direction: column; /* ترتيب العناصر عموديًا */
+            justify-content: center; /* توسيط عمودي للعناصر */
+            align-items: center; /* توسيط أفقي للعناصر */
+            z-index: 3000; /* وضع الشاشة فوق باقي العناصر */
+        ">
+            <img src="/images/شعار_جامعة_الطائف_السعودية.jpg" alt="شعار الجامعة" style="
+                width: 720px; /* تحديد عرض الشعار */
+                max-width: 80%; /* جعل عرضه لا يتجاوز 80% من الشاشة */
+                border-radius: 20px; /* تدوير زواياه بمقدار 20 بكسل */
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3); /* إضافة ظل خفيف حول الشعار */
+                margin-bottom: 30px; /* مسافة أسفل الشعار */
+            ">
+        
+            <div style="display: flex; align-items: center; gap: 12px;"> <!-- حاوية للنص والمؤشر الدوار -->
+                <span style="font-size: 22px; font-weight: bold; color: white;">
+                    جاري التحميل... <!-- نص رسالة التحميل -->
+                </span>
+                <div class="spinner" style="
+                    width: 28px; /* عرض العنصر الدوار */
+                    height: 28px; /* ارتفاع العنصر الدوار */
+                    border: 4px solid white; /* إطار أبيض كامل */
+                    border-top: 4px solid transparent; /* جعل الجزء العلوي شفافًا لإظهار الحركة */
+                    border-radius: 50%; /* تحويل العنصر إلى دائرة كاملة */
+                    animation: spin 1s linear infinite; /* تشغيل أنيميشن spin بشكل مستمر */
+                ">
+                </div>
+            </div>
         </div>
-    </div>
-</div>
+        
 
 <!-- ✅ سكربت شاشة التحميل + تحديد الموقع بعد 5 ثواني -->
 <script>
@@ -1199,7 +1278,7 @@ text-align:center; font-size:18px; min-width:250px;">
 </script>
 
 
-  <script>
+<script>
     const translations = {
         ar: {
             explore: "استكشاف",
@@ -1232,12 +1311,14 @@ text-align:center; font-size:18px; min-width:250px;">
             noSearches: "لا توجد عمليات بحث سابقة.",
             college: "كلية",
             administration: "الإدارة",
-            medicalAdministration: "الإدارة الطبية",
+            medical: "الإدارة الطبية",
             libraryBuilding: "المكتبة",
             mosque: "المسجد",
             restaurant: "المطعم",
-            distanceInfo: "المسافة ستظهر هنا بعد تحديد النقطتين..."
-
+            distanceInfo: "المسافة ستظهر هنا بعد تحديد النقطتين...",
+            universityPresidentOffice: "مكتب مدير الجامعة",
+            vicePresidentOffice: "مكتب وكيل الجامعة",
+            scientificCouncil: "المجلس العلمي"
         },
         en: {
             explore: "Explore",
@@ -1270,12 +1351,14 @@ text-align:center; font-size:18px; min-width:250px;">
             noSearches: "No recent searches.",
             college: "College",
             administration: "Administration",
-            medicalAdministration: "Medical Administration",
+            medical: "Medical Administration",
             libraryBuilding: "Library",
             mosque: "Mosque",
             restaurant: "Restaurant",
-            distanceInfo: "The distance will appear here after selecting two points..."
-
+            distanceInfo: "The distance will appear here after selecting two points...",
+            universityPresidentOffice: "University President's Office",
+            vicePresidentOffice: "Vice President's Office",
+            scientificCouncil: "Scientific Council"
         }
     };
     
@@ -1309,37 +1392,55 @@ text-align:center; font-size:18px; min-width:250px;">
     }
     </script>
     
-  <script>
+<script>
     // ربط عناصر البحث
     const searchInput = document.getElementById("searchInput");
     const suggestionsList = document.getElementById("suggestionsList");
-    
-    // توليد اقتراحات تلقائية من ملف buildings-data.js
-    const suggestions = buildings.map(b => ({
-        ar: b.name || "",
-        en: b.enName || ""
-    }));
-    
+
+    // توليد اقتراحات تلقائية من ملف buildings-data.js بدون تكرار
+    const uniqueArabic = new Set();
+    const uniqueEnglish = new Set();
+
+    const suggestions = [];
+
+    buildings.forEach(b => {
+        const arName = b.name || "";
+        const enName = b.enName || "";
+
+        if (!uniqueArabic.has(arName)) {
+            uniqueArabic.add(arName);
+        }
+
+        if (!uniqueEnglish.has(enName)) {
+            uniqueEnglish.add(enName);
+        }
+
+        // فقط إذا لم يُضف من قبل بأي من اللغتين نضيف للسجل النهائي
+        if (!suggestions.some(s => s.ar === arName && s.en === enName)) {
+            suggestions.push({ ar: arName, en: enName });
+        }
+    });
+
     let selectedIndex = -1;
-    
+
     // عند الكتابة
     searchInput.addEventListener("input", function () {
         const query = this.value.trim().toLowerCase();
         suggestionsList.innerHTML = "";
         selectedIndex = -1;
-    
+
         if (!query) {
             suggestionsList.style.display = "none";
             return;
         }
-    
+
         const isArabic = /^[\u0600-\u06FF\s\d]+$/.test(query);
         const langKey = isArabic ? "ar" : "en";
-    
+
         const filtered = suggestions.filter(item =>
             item[langKey].toLowerCase().includes(query)
         );
-    
+
         if (filtered.length > 0) {
             filtered.forEach(item => {
                 const li = document.createElement("li");
@@ -1357,7 +1458,7 @@ text-align:center; font-size:18px; min-width:250px;">
             suggestionsList.style.display = "none";
         }
     });
-    
+
     // التنقل بين الاقتراحات بالأسهم والإنتر
     searchInput.addEventListener("keydown", function (event) {
         const items = suggestionsList.querySelectorAll("li");
@@ -1384,7 +1485,7 @@ text-align:center; font-size:18px; min-width:250px;">
             }
         }
     });
-    
+
     // تفعيل التحديد
     function updateSelection(items) {
         items.forEach((item, index) => {
@@ -1396,14 +1497,15 @@ text-align:center; font-size:18px; min-width:250px;">
             }
         });
     }
-    
+
     // إخفاء الاقتراحات عند الضغط بالخارج
     document.addEventListener("click", function (e) {
         if (!document.querySelector(".search-container").contains(e.target)) {
             suggestionsList.style.display = "none";
         }
     });
-    </script>
+</script>
+
     
 
 </body>
