@@ -1,8 +1,8 @@
-﻿var buildings = [
+var buildings = [
     { name: "عمادة شؤون الطلاب", enName: "Deanship of Student Affairs", room: 1000, shortRoom: 1, latitude: 21.4331, longitude: 40.4962 },
     { name: "القاعة الكبرى", enName: "Grand Hall", room: 2000, shortRoom: 2, latitude: 21.433675473634914, longitude: 40.49532651901246 },
     { name: "القاعة الصغرى", enName: "Small Hall", room: 3000, shortRoom: 3, latitude: 21.433226065024797, longitude: 40.4948115348816 },
-    { name: "الإدارة العليا", enName: "Senior Administration", room: 4000, shortRoom: 4, latitude: 21.432636838306106, longitude: 40.49555182456971 },
+    { name: "الإدارة العليا", enName: "Senior Administration", room: 4000, shortRoom: 4, latitude: 21.432636838306106, longitude: 40.49555182456971 }, { name: "مكتب مدير الجامعة", enName: "University President's Office", room: 4001, shortRoom: 4, latitude: 21.432700, longitude: 40.495600 }, { name: "مكتب وكيل الجامعة", enName: "Vice President's Office", room: 4002, shortRoom: 4, latitude: 21.432750, longitude: 40.495650 }, { name: "المجلس العلمي", enName: "Scientific Council", room: 4003, shortRoom: 4, latitude: 21.432800, longitude: 40.495700 },
     { name: "(5) الفصول الدراسية", enName: "Classrooms(5)", room: 5000, shortRoom: 5, latitude: 21.432222, longitude: 40.496185 },
     { name: "المكتبات", enName: "Libraries", room: 8000, shortRoom: 8, latitude: 21.431648130501536, longitude: 40.49657106399537 },
     { name: "كلية الهندسة", enName: "College of Engineering", room: 9000, shortRoom: 9, latitude: 21.43179793514484, longitude: 40.49561619758607 },
@@ -29,6 +29,7 @@
     { name: "الجامع الكبير", enName: "Mosque", shortRoom: 34, latitude: 21.432357204454753, longitude: 40.49209713935853 },
     { name: " الفصـول الدراسية ", enName: "Classrooms(35)", room: 35000, shortRoom: 35, latitude: 21.432517, longitude: 40.492612 },
     { name: " مبنى وكلاء الجامعة", enName: "Vice President Building", room: 36000, shortRoom: 36, latitude: 21.433061281521027, longitude: 40.49336850643158 },
+    { name: "المجلس العلمي", enName: "Scientific Council", room: 36001, shortRoom: 36, latitude: 21.433061281521027, longitude: 40.49336850643158 },
     { name: "معامل قسم الاحياء", enName: "Biology Labs", room: 38000, shortRoom: 38, latitude: 21.433752871644753, longitude: 40.49267113208771 },
     { name: "معامل قسم الفيزياء وقسم الكيمياء ", enName: "Physics & Chemistry Labs", room: 39000, shortRoom: 39, latitude: 21.43289150438317, longitude: 40.49183160066605 },
     { name: "الكلية التطبيقية + عمادة الدراسات", enName: "Applied College + Studies Deanship", room: 40000, shortRoom: 40, latitude: 21.43215996239809, longitude: 40.491426587104804 },
